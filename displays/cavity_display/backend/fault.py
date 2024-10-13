@@ -2,7 +2,7 @@ import dataclasses
 from datetime import datetime
 from typing import Union
 
-from lcls_tools.common.controls.pyepics.utils import PV
+from lcls_tools.common.controls.pyepics.utils import PV, PVInvalidError
 from lcls_tools.common.data.archiver import (
     ArchiveDataHandler,
     ArchiverValue,
@@ -20,7 +20,7 @@ class FaultCounter:
     invalid_count: int = 0
 
     @property
-    def sum_fault_count(self):
+    def sum_fault_count(self) -> int:
         return self.fault_count + self.invalid_count
 
     @property
@@ -30,34 +30,29 @@ class FaultCounter:
         except ZeroDivisionError:
             return 1
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
         return self.sum_fault_count > other.sum_fault_count
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.sum_fault_count == other.sum_fault_count
-
-
-class PVInvalidError(Exception):
-    def __init__(self, message):
-        super(PVInvalidError, self).__init__(message)
 
 
 class Fault:
     def __init__(
-            self,
-            tlc,
-            severity,
-            pv,
-            ok_value,
-            fault_value,
-            long_description,
-            short_description,
-            button_level,
-            button_command,
-            macros,
-            button_text,
-            button_macro,
-            action,
+        self,
+        tlc,
+        severity,
+        pv,
+        ok_value,
+        fault_value,
+        long_description,
+        short_description,
+        button_level,
+        button_command,
+        macros,
+        button_text,
+        button_macro,
+        action,
     ):
         self.tlc = tlc
         self.severity = int(severity)
@@ -74,12 +69,12 @@ class Fault:
 
         self.pv: PV = PV(pv, connection_timeout=PV_TIMEOUT)
 
-    def is_currently_faulted(self):
+    def is_currently_faulted(self) -> bool:
         # returns "TRUE" if faulted
         # returns "FALSE" if not faulted
         return self.is_faulted(self.pv)
 
-    def is_faulted(self, obj: Union[PV, ArchiverValue]):
+    def is_faulted(self, obj: Union[PV, ArchiverValue]) -> bool:
         """
         Dug through the pyepics source code to find the severity values:
         class AlarmSeverity(DefaultIntEnum):
@@ -110,14 +105,14 @@ class Fault:
                 " 'OK if equal to' parameter"
             )
 
-    def was_faulted(self, time: datetime):
+    def was_faulted(self, time: datetime) -> bool:
         archiver_value: ArchiverValue = get_data_at_time(
             pv_list=[self.pv.pvname], time_requested=time
         )[self.pv.pvname]
         return self.is_faulted(archiver_value)
 
     def get_fault_count_over_time_range(
-            self, start_time: datetime, end_time: datetime
+        self, start_time: datetime, end_time: datetime
     ) -> FaultCounter:
         result = get_values_over_time_range(
             pv_list=[self.pv.pvname], start_time=start_time, end_time=end_time
