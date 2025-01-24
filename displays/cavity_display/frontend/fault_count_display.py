@@ -94,6 +94,7 @@ class FaultCountDisplay(Display):
         if not cm_name or not cav_num:
             return
 
+        # Type annotation, are you actually just a Cavity?
         self.cavity: BackendCavity = self.machine.cryomodules[cm_name].cavities[
             int(cav_num)
         ]

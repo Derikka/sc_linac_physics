@@ -118,7 +118,7 @@ class BackendCavity(Cavity):
                 prefix=csv_prefix,
             )
 
-            # setting key of faults dictionary to be row number b/c it's unique (i.e. not repeated)
+            # setting key of faults dictionary to be a hash b/c it's unique (i.e. not repeated)
             self.faults[key]: OrderedDict[int, Fault] = Fault(
                 tlc=tlc,
                 severity=csv_fault_dict["Severity"],
