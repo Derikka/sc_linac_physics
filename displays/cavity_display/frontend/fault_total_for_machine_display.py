@@ -1,12 +1,20 @@
-from typing import List
+from typing import List, OrderedDict
 
 import pyqtgraph as pg
 from PyQt5.QtCore import QDateTime
-from PyQt5.QtWidgets import QComboBox, QVBoxLayout, QHBoxLayout, QDateTimeEdit, QLabel
+from PyQt5.QtWidgets import (
+    QComboBox,
+    QVBoxLayout,
+    QHBoxLayout,
+    QDateTimeEdit,
+    QLabel,
+    QPushButton,
+)
 from pydm import Display
 
 from displays.cavity_display.backend.backend_cavity import BackendCavity
 from displays.cavity_display.backend.backend_machine import BackendMachine
+from displays.cavity_display.backend.fault import Fault
 from displays.cavity_display.frontend.cavity_widget import DARK_GRAY_COLOR
 from displays.cavity_display.utils import utils
 
@@ -17,6 +25,7 @@ class FaultCountForMachineDisplay(Display):
         self.setWindowTitle("Fault Count Total for the Machine")
 
         self.machine = BackendMachine(lazy_fault_pvs=lazy_fault_pvs)
+        self.backend_cavities: List[BackendCavity] = list(self.machine.all_iterator)
 
         main_v_layout = QVBoxLayout()
         input_h_layout = QHBoxLayout()
@@ -45,6 +54,8 @@ class FaultCountForMachineDisplay(Display):
         self.start_selector.setDateTime(intermediate_time)
         self.end_selector.setDateTime(end_date_time)
 
+        self.update_button = QPushButton("Update")
+
         input_h_layout.addWidget(QLabel("Fault:"))
         input_h_layout.addWidget(self.fault_combo_box)
         input_h_layout.addWidget(QLabel("Number of time bins:"))
@@ -54,6 +65,7 @@ class FaultCountForMachineDisplay(Display):
         input_h_layout.addWidget(self.start_selector)
         input_h_layout.addWidget(QLabel("End:"))
         input_h_layout.addWidget(self.end_selector)
+        input_h_layout.addWidget(self.update_button)
 
         fault_list = []
         for fault_row_dict in utils.parse_csv():
@@ -65,7 +77,7 @@ class FaultCountForMachineDisplay(Display):
         self.num_of_faults = []
         self.num_of_invalids = []
 
-        self.fault_combo_box.currentIndexChanged.connect(self.update_plot)
+        self.update_button.clicked.connect(self.update_plot)
 
     def get_data(self):
         self.num_of_faults = []
@@ -77,15 +89,15 @@ class FaultCountForMachineDisplay(Display):
         """
         Using this section to try and figure out how to run through all cavities + cryomodules
         """
-        self.backend_cavities: List[BackendCavity] = list(self.machine.all_iterator)
         for backend_cavity_object in self.backend_cavities:
-            for fault_tuple in backend_cavity_object.faults.items():
-                fault_object = fault_tuple[1]
+            fault_dict: OrderedDict[int, Fault] = backend_cavity_object.faults
+
+            for hash, fault_object in fault_dict.items():
                 if fault_object.tlc == self.fault_combo_box.currentText():
-                    # print(backend_cavity_object, fault_object.tlc)
-                    fault_counter_object = fault_object.get_fault_count_over_time_range(
-                        start, end
-                    )
+                    print(backend_cavity_object, hash, ":", fault_object.tlc)
+                    # fault_counter_object: FaultCounter = (
+                    #     fault_object.get_fault_count_over_time_range(start, end)
+                    # )
 
     def update_plot(self):
         self.plot_window.clear()
