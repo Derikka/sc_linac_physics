@@ -14,7 +14,7 @@ from pydm import Display
 
 from displays.cavity_display.backend.backend_cavity import BackendCavity
 from displays.cavity_display.backend.backend_machine import BackendMachine
-from displays.cavity_display.backend.fault import Fault
+from displays.cavity_display.backend.fault import Fault, FaultCounter
 from displays.cavity_display.frontend.cavity_widget import DARK_GRAY_COLOR
 from displays.cavity_display.utils import utils
 
@@ -92,12 +92,17 @@ class FaultCountForMachineDisplay(Display):
         for backend_cavity_object in self.backend_cavities:
             fault_dict: OrderedDict[int, Fault] = backend_cavity_object.faults
 
-            for hash, fault_object in fault_dict.items():
+            for hash_key, fault_object in fault_dict.items():
                 if fault_object.tlc == self.fault_combo_box.currentText():
-                    print(backend_cavity_object, hash, ":", fault_object.tlc)
-                    # fault_counter_object: FaultCounter = (
-                    #     fault_object.get_fault_count_over_time_range(start, end)
-                    # )
+                    fault_counter_object: FaultCounter = (
+                        fault_object.get_fault_count_over_time_range(start, end)
+                    )
+                    print(
+                        backend_cavity_object,
+                        hash_key,
+                        fault_object.tlc,
+                        fault_counter_object,
+                    )
 
     def update_plot(self):
         self.plot_window.clear()
