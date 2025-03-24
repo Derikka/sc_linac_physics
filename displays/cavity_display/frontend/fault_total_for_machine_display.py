@@ -1,7 +1,9 @@
 from typing import List, OrderedDict
 
+import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import QDateTime
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QComboBox,
     QVBoxLayout,
@@ -33,7 +35,12 @@ class FaultCountForMachineDisplay(Display):
         self.plot_window = pg.plot()
         self.plot_window.setBackground(DARK_GRAY_COLOR)
 
+        self.fault_header = QLabel("Fault")
+        self.fault_header.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+        self.fault_header.setStyleSheet("font-weight: bold")
+
         main_v_layout.addLayout(input_h_layout)
+        main_v_layout.addWidget(self.fault_header)
         main_v_layout.addWidget(self.plot_window)
         self.setLayout(main_v_layout)
 
@@ -79,6 +86,21 @@ class FaultCountForMachineDisplay(Display):
 
         self.update_button.clicked.connect(self.update_plot)
 
+    def tell_me_the_bins(self):
+        print("I'm in the tell_me_the_bins function")
+        num_of_bins: str = self.number_of_bins_combo_box.currentText()
+        start_time = self.start_selector.dateTime().toPyDateTime()
+        end_time = self.end_selector.dateTime().toPyDateTime()
+        total_time_span = end_time - start_time
+        time_interval = total_time_span / int(num_of_bins)
+
+        all_time_intervals = []
+        initial_time_interval = start_time
+
+        return [test_date1 + diff * idx for idx in range(N)] + [test_date2]
+
+        print(num_of_bins, start_time, end_time, total_time_span, time_interval)
+
     def get_data(self):
         self.num_of_faults = []
         self.num_of_invalids = []
@@ -106,4 +128,16 @@ class FaultCountForMachineDisplay(Display):
 
     def update_plot(self):
         self.plot_window.clear()
-        self.get_data()
+        self.tell_me_the_bins()
+        # self.get_data()
+
+        y1 = np.linspace(0, 20, num=20)
+
+        # create horizontal list
+        x = np.arange(20)
+
+        # create bar chart
+        bg1 = pg.BarGraphItem(x=x, height=y1, width=0.6, brush="r")
+        self.plot_window.addItem(bg1)
+
+        self.fault_header.setText(self.fault_combo_box.currentText())
